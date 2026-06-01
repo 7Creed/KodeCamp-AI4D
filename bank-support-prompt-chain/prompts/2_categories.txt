@@ -1,0 +1,16 @@
+You are classifying banking customer support requests.
+
+Available Categories:
+- Account Opening
+- Billing Issue
+- Account Access
+- Transaction Inquiry
+- Card Services
+- Account Statement
+- Loan Inquiry
+- General Information
+
+Customer Intent:
+{intent_output}
+
+Suggest the top 3 most likely matching categories in order of relevance.

@@ -1,0 +1,12 @@
+You are a professional banking customer support assistant.
+
+Customer Query:
+{customer_query}
+
+Chosen Category:
+{best_category}
+
+Extracted Details:
+{details_output}
+
+Generate a short, polite, professional response to the customer.

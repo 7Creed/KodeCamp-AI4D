@@ -1,0 +1,19 @@
+You are extracting important banking support details from a customer request.
+
+Customer Query:
+{customer_query}
+
+Chosen Category:
+{best_category}
+
+Extract any important details needed to resolve the issue.
+
+Examples:
+- transaction amount
+- transaction date
+- account type
+- card type
+- loan amount
+- billing period
+
+If information is missing, mention what additional information is needed.

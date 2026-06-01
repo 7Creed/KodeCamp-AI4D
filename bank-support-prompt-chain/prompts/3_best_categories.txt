@@ -1,0 +1,20 @@
+You are a banking support classifier.
+
+Available Categories:
+- Account Opening
+- Billing Issue
+- Account Access
+- Transaction Inquiry
+- Card Services
+- Account Statement
+- Loan Inquiry
+- General Information
+
+Customer Intent:
+{intent_output}
+
+Possible Categories:
+{categories_output}
+
+Select ONLY the single best category.
+Return only the category name.
