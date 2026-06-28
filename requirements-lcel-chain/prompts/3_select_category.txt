@@ -1,0 +1,8 @@
+Project interpretation:
+{interpretation}
+
+Possible categories:
+{possible_categories}
+
+Select the single best category from the allowed list.
+Explain your choice briefly.

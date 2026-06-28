@@ -1,0 +1,16 @@
+Create an initial project assessment.
+
+Interpretation:
+{interpretation}
+
+Selected category:
+{selected_category}
+
+Missing requirements:
+{missing_requirements}
+
+Include:
+1. Selected category
+2. Summary of the client request
+3. Missing information
+4. Recommended next steps

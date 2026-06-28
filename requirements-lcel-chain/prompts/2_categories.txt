@@ -1,0 +1,17 @@
+Based on this interpretation:
+
+{interpretation}
+
+Suggest possible categories from this list only:
+Web Application
+Mobile Application
+API / Backend Service
+Data Analytics Platform
+AI / Machine Learning System
+E-Commerce Platform
+Enterprise Management System
+System Integration
+DevOps / Infrastructure Automation
+General Software Project
+
+Explain why each possible category may apply.

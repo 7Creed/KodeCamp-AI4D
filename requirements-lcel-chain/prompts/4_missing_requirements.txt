@@ -1,0 +1,17 @@
+Project interpretation:
+{interpretation}
+
+Selected category:
+{selected_category}
+
+Identify missing requirements needed before implementation.
+Consider:
+- Target users
+- Platform
+- Authentication
+- Integrations
+- Data storage
+- Performance/scalability
+- Security
+- Admin features
+- Reporting

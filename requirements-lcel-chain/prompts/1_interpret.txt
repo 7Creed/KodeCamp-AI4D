@@ -1,0 +1,7 @@
+You are a software requirements analyst.
+
+Client request:
+{project_description}
+
+Interpret the request and identify the main business objective.
+Return a clear explanation.
