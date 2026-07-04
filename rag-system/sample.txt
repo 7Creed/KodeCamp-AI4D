@@ -1,0 +1,1 @@
+This document is about a school payment app where students can buy data bundles, pay school fees, receive notifications, and track payment history.
