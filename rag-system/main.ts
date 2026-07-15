@@ -4,8 +4,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { InferenceClient } from '@huggingface/inference';
 import { GoogleGenAI } from '@google/genai';
-// import { ChromaClient } from 'chromadb';
-import { CloudClient } from 'chromadb';
+import { ChromaClient, CloudClient } from 'chromadb';
 
 const {
   HF_API_KEY,
@@ -18,7 +17,7 @@ const {
   CHROMA_TENANT,
   CHROMA_DATABASE,
   RAG_DATA_DIR,
-  CHUNK_LENGTH,
+  RAG_CHUNK_LENGTH,
   SERVER_PORT,
 } = process.env;
 
@@ -27,7 +26,7 @@ if (!HF_API_KEY || !EMBED_MODEL_NAME || !GEMINI_API_KEY || !LLM_MODEL_NAME) {
 }
 
 const dataDir = RAG_DATA_DIR || './data';
-const chunkLength = Number(CHUNK_LENGTH || 500);
+const chunkLength = Number(RAG_CHUNK_LENGTH || 500);
 const serverPort = Number(SERVER_PORT || 3000);
 
 fs.mkdirSync(dataDir, { recursive: true });
@@ -37,21 +36,39 @@ app.use(express.json());
 
 const upload = multer({ dest: dataDir });
 
-
 const hf = new InferenceClient(HF_API_KEY);
 const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-// const chroma = new ChromaClient({
-//   host: CHROMA_DB_HOST || 'localhost',
-//   port: Number(CHROMA_DB_PORT || 8000),
-// });
+function createChromaClient() {
+  const host = CHROMA_DB_HOST;
+  const port = CHROMA_DB_PORT;
 
+  if (host && port) {
+    console.log(`Using Chroma server at ${host}:${port}`);
 
-const chroma = new CloudClient({
-  apiKey: CHROMA_API_KEY,
-  tenant: CHROMA_TENANT,
-  database: CHROMA_DATABASE,
-});
+    return new ChromaClient({
+      host,
+      port: Number(port),
+    });
+  }
+
+  if (CHROMA_API_KEY) {
+    console.log('Using Chroma Cloud');
+
+    return new CloudClient({
+      apiKey: CHROMA_API_KEY,
+      tenant: CHROMA_TENANT,
+      database: CHROMA_DATABASE,
+    });
+  }
+
+  return new ChromaClient({
+    host: CHROMA_DB_HOST || 'localhost',
+    port: Number(CHROMA_DB_PORT || 8000),
+  });
+}
+
+const chroma = createChromaClient();
 
 const collection = await chroma.getOrCreateCollection({
   name: 'rag_documents',
@@ -82,7 +99,6 @@ async function createEmbedding(text: string): Promise<number[]> {
 
   return result as number[];
 }
-
 
 async function askGemini(query: string, context: string) {
   const prompt = `
