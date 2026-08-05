@@ -1,0 +1,17 @@
+{
+  "name": "building-tools-llm",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "tsx main.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^1.15.0",
+    "dotenv": "^17.2.1",
+    "openai": "^5.12.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
