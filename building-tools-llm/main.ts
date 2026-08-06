@@ -3,7 +3,6 @@ import 'dotenv/config';
 import {
   FunctionCallingConfigMode,
   GoogleGenAI,
-  Part,
   createPartFromFunctionCall,
   createPartFromFunctionResponse,
   createPartFromText,
@@ -150,7 +149,7 @@ const functionDeclarations = [
 ];
 
 async function runConversation() {
-  const contents: Array<{ role: 'user' | 'model'; parts: Part[] }> = [
+  const contents: Array<{ role: 'user' | 'model'; parts: any[] }> = [
     {
       role: 'user',
       parts: [createPartFromText(USER_PROMPT)],
