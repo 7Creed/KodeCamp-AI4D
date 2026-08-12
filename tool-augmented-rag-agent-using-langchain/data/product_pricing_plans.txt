@@ -1,0 +1,29 @@
+Product Pricing Plans — Internal Reference
+
+Starter Plan
+Priced at $19 per user per month, billed annually. Includes up to 5 team
+members, 10GB of storage, and email support with a 48-hour response SLA.
+API access is not included in the Starter plan.
+
+Growth Plan
+Priced at $49 per user per month, billed annually. Includes up to 50 team
+members, 250GB of storage, priority chat support with a 4-hour response SLA
+during business hours, and read-only API access with a rate limit of 1,000
+requests per hour.
+
+Enterprise Plan
+Custom pricing, negotiated per contract, typically starting around $120 per
+user per month for annual commitments over 200 seats. Includes unlimited
+storage, a dedicated customer success manager, full API access with a rate
+limit of 50,000 requests per hour, and a 1-hour response SLA backed by a
+99.9% uptime guarantee.
+
+Add-Ons
+Advanced analytics dashboard: $8 per user per month on Growth or Enterprise.
+Single sign-on (SSO) via SAML: included free on Enterprise, $200/month flat
+fee on Growth, not available on Starter.
+
+Trial and Cancellation
+All plans include a 14-day free trial with no credit card required.
+Cancellations take effect at the end of the current billing cycle; there
+are no partial-month refunds.

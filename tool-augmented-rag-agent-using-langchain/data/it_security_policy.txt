@@ -1,0 +1,28 @@
+IT Security Policy — Internal Use Only
+
+Password Requirements
+All employee accounts must use a password of at least 14 characters, including
+one uppercase letter, one number, and one special character. Passwords must be
+rotated every 90 days. Reusing any of the last 8 passwords is not permitted.
+
+VPN and Remote Access
+Employees connecting to internal systems from outside the office network must
+use the company VPN (client name: NovaShield VPN). VPN sessions automatically
+disconnect after 4 hours of inactivity and require re-authentication via the
+Okta mobile app.
+
+Device Encryption
+All company-issued laptops must have full-disk encryption enabled (BitLocker
+on Windows, FileVault on macOS) before they are allowed to connect to the
+internal file server. IT performs a compliance scan every Monday at 6 AM.
+
+Incident Reporting
+Any suspected security incident (phishing email, lost device, unauthorized
+access) must be reported to security@internal.example.com within 1 hour of
+discovery. The Security Response Team's on-call line is +1-800-555-0199.
+Failure to report within the window may result in a compliance review.
+
+Software Installation
+Employees may not install software from outside the approved IT catalog on
+company devices without written approval from the IT Manager. Exceptions are
+reviewed on the second Friday of each month.
