@@ -72,7 +72,9 @@ class RAGManager {
       url: process.env.CHROMA_URL || 'http://localhost:8000',
     });
 
-    this.initPromise = this.loadDataDir();
+    this.initPromise = this.loadDataDir().catch((err: any) => {
+      console.error('[RAG] Failed to initialize vector store:', err.message);
+    });
   }
 
   private async ensureReady(): Promise<void> {
@@ -122,9 +124,15 @@ class RAGManager {
 
   async addDocuments(docs: Document[]): Promise<void> {
     if (docs.length === 0) return;
-    this.documents.push(...docs);
-    await this.vectorStore.addDocuments(docs);
-    this.rebuildBM25();
+    try {
+      this.documents.push(...docs);
+      await this.vectorStore.addDocuments(docs);
+      this.rebuildBM25();
+    } catch (err: any) {
+      console.error('[RAG] addDocuments failed:', err.message);
+
+      this.rebuildBM25();
+    }
   }
 
   private rebuildBM25(): void {
@@ -151,18 +159,24 @@ class RAGManager {
   }
 
   async query(queryText: string, k: number = DEFAULT_K): Promise<string> {
-    await this.ensureReady();
-    const retriever = this.getHybridRetriever(k);
-    const results = await retriever.invoke(queryText);
-    if (!results || results.length === 0) {
-      return 'No relevant internal information found.';
+    try {
+      await this.ensureReady();
+      const retriever = this.getHybridRetriever(k);
+      const results = await retriever.invoke(queryText);
+      if (!results || results.length === 0) {
+        return 'No relevant internal information found.';
+      }
+      return results
+        .map(
+          (d: Document) =>
+            `[Source: ${d.metadata.source || d.metadata.type || 'unknown'}]\n${d.pageContent}`,
+        )
+        .join('\n\n');
+    } catch (err: any) {
+      console.error('[RAG] query failed:', err.message);
+
+      return 'Internal knowledge base is currently unavailable. Answer using general knowledge instead, and mention that internal documents could not be checked.';
     }
-    return results
-      .map(
-        (d: Document) =>
-          `[Source: ${d.metadata.source || d.metadata.type || 'unknown'}]\n${d.pageContent}`,
-      )
-      .join('\n\n');
   }
 
   async saveConversationTurn(
@@ -182,49 +196,93 @@ class RAGManager {
 
 const ragManager = new RAGManager();
 
-const getUserProfile = tool(
-  async ({ user_id }: { user_id: string }) => {
+const getFlightSchedule = tool(
+  async ({ origin, destination }: { origin: string; destination: string }) => {
+    const flightTimeHoursOneWay = 5.5;
+    const oneWayPriceUsd = 460;
+
     return JSON.stringify({
-      user_id,
-      name: 'John Doe',
-      age: 30,
-      city: 'New York',
+      origin,
+      destination,
+      flight_time_hours_one_way: flightTimeHoursOneWay,
+      round_trip_flight_time_hours: flightTimeHoursOneWay * 2,
+      one_way_price_usd: oneWayPriceUsd,
+      round_trip_price_usd: oneWayPriceUsd * 2,
+      currency: 'USD',
     });
   },
   {
-    name: 'get_user_profile',
-    description: 'Get the profile of a user.',
+    name: 'get_flight_schedule',
+    description:
+      'Return a flight schedule and pricing between two cities in USD.',
     schema: z.object({
-      user_id: z.string().describe('The ID of the user.'),
+      origin: z.string().describe('Origin city or airport code.'),
+      destination: z.string().describe('Destination city or airport code.'),
     }),
   },
 );
 
-const searchDocuments = tool(
-  async ({ query }: { query: string }) => {
-    return JSON.stringify([
-      { document_id: 1, title: 'Document 1', content: 'This is document 1.' },
-      { document_id: 2, title: 'Document 2', content: 'This is document 2.' },
-    ]);
+const getHotelSchedule = tool(
+  async ({ city, nights }: { city: string; nights: number }) => {
+    const nightlyRateUsd = 140;
+
+    return JSON.stringify({
+      city,
+      hotel_name: 'Radisson Blu Nairobi',
+      nightly_rate_usd: nightlyRateUsd,
+      nights,
+      total_price_usd: nightlyRateUsd * nights,
+      currency: 'USD',
+    });
   },
   {
-    name: 'search_documents',
-    description: 'Search for documents based on a query.',
+    name: 'get_hotel_schedule',
+    description:
+      'Return hotel pricing for a city in USD for a given number of nights.',
     schema: z.object({
-      query: z.string().describe('The search query.'),
+      city: z.string().describe('City where the hotel is located.'),
+      nights: z.number().describe('Number of nights to stay.'),
     }),
   },
 );
 
-const getCurrentTemperature = tool(
-  async ({ city }: { city: string }) => {
-    return '25.5';
+const FX_RATES: Record<string, number> = {
+  USD: 1,
+  KES: 129.5,
+  NGN: 1510,
+  EUR: 0.92,
+};
+
+const convertCurrency = tool(
+  async ({
+    amount,
+    from,
+    to,
+  }: {
+    amount: number;
+    from: string;
+    to: string;
+  }) => {
+    const fromRate = FX_RATES[from] ?? 1;
+    const toRate = FX_RATES[to] ?? 1;
+    const convertedAmount = (amount * toRate) / fromRate;
+
+    return JSON.stringify({
+      amount,
+      from,
+      to,
+      rate: toRate / fromRate,
+      converted_amount: Number(convertedAmount.toFixed(2)),
+      currency: to,
+    });
   },
   {
-    name: 'get_current_temperature',
-    description: 'Get the current temperature in a given city.',
+    name: 'convert_currency',
+    description: 'Convert an amount from one currency to another.',
     schema: z.object({
-      city: z.string().describe('The name of the city.'),
+      amount: z.number().describe('The amount to convert.'),
+      from: z.string().describe('Source currency code, e.g. USD or KES.'),
+      to: z.string().describe('Target currency code, e.g. USD or KES.'),
     }),
   },
 );
@@ -248,9 +306,9 @@ const queryInternalKnowledge = tool(
 );
 
 const ALL_TOOLS = [
-  getUserProfile,
-  searchDocuments,
-  getCurrentTemperature,
+  getFlightSchedule,
+  getHotelSchedule,
+  convertCurrency,
   queryInternalKnowledge,
 ];
 
@@ -302,7 +360,7 @@ async function runAgent(
 
   const result = await agent.invoke(
     { messages: [new HumanMessage(prompt)] },
-    config,
+    { ...config, recursionLimit: 10 },
   );
   const messages: BaseMessage[] = result.messages;
 
