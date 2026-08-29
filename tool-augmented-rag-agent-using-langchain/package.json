@@ -1,31 +1,17 @@
 {
-  "name": "rag-agent-tools-memory",
+  "name": "building-tools-llm",
   "version": "1.0.0",
-  "description": "Tool-augmented RAG agent with hybrid retrieval and LangGraph memory",
-  "type": "module",
-  "main": "main.ts",
   "scripts": {
-    "dev": "tsx main.ts",
-    "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "tsx main.ts"
   },
   "dependencies": {
-    "@huggingface/inference": "^4.0.5",
-    "@langchain/community": "^0.3.0",
-    "@langchain/core": "^0.3.0",
-    "@langchain/langgraph": "^0.2.0",
-    "@langchain/openai": "^0.3.0",
-    "@langchain/textsplitters": "^0.1.0",
-    "chromadb": "^1.9.0",
-    "dotenv": "^16.4.5",
-    "langchain": "^0.3.0",
-    "mammoth": "^1.8.0",
-    "pdf-parse": "^1.1.1",
-    "zod": "^3.23.8"
+    "@google/genai": "^1.15.0",
+    "dotenv": "^17.2.1",
+    "openai": "^5.12.2"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
   }
 }

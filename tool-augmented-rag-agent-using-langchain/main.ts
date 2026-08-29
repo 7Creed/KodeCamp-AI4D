@@ -1,399 +1,461 @@
+// import 'dotenv/config';
+
+// import {
+//   FunctionCallingConfigMode,
+//   GoogleGenAI,
+//   createPartFromFunctionCall,
+//   createPartFromFunctionResponse,
+//   createPartFromText,
+// } from '@google/genai';
+
+// const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// if (!GEMINI_API_KEY) {
+//   throw new Error('GEMINI_API_KEY is missing from the .env file.');
+// }
+
+// const ai = new GoogleGenAI({
+//   apiKey: GEMINI_API_KEY,
+// });
+
+// const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS ?? 2048);
+
+// const MODEL = process.env.LLM_MODEL_NAME ?? 'gemini-2.5-flash';
+
+// const USER_PROMPT = `I'm taking a flight from Lagos to Nairobi for a conference.
+// I would like to know the total flight time back and forth, and the total cost of logistics for this conference if I'm staying for three days.`;
+
+// type ToolArgs = Record<string, unknown>;
+
+// function getFlightSchedule(args: ToolArgs) {
+//   const origin = String(args.origin ?? 'Lagos');
+//   const destination = String(args.destination ?? 'Nairobi');
+
+//   return {
+//     origin,
+//     destination,
+//     flight_time_hours_one_way: 5.5,
+//     round_trip_flight_time_hours: 11,
+//     one_way_price_usd: 460,
+//     round_trip_price_usd: 920,
+//     currency: 'USD',
+//   };
+// }
+
+// function getHotelSchedule(args: ToolArgs) {
+//   const city = String(args.city ?? 'Nairobi');
+//   const nights = Number(args.nights ?? 3);
+//   const nightlyRateUsd = 140;
+
+//   return {
+//     city,
+//     hotel_name: 'Radisson Blu Nairobi',
+//     nightly_rate_usd: nightlyRateUsd,
+//     nights,
+//     total_price_usd: nightlyRateUsd * nights,
+//     currency: 'USD',
+//   };
+// }
+
+// function convertCurrency(args: ToolArgs) {
+//   const amount = Number(args.amount ?? 0);
+//   const from = String(args.from ?? 'USD');
+//   const to = String(args.to ?? 'KES');
+
+//   const fxRates: Record<string, number> = {
+//     USD: 1,
+//     KES: 129.5,
+//     NGN: 1510,
+//     EUR: 0.92,
+//   };
+
+//   const fromRate = fxRates[from] ?? 1;
+//   const toRate = fxRates[to] ?? 1;
+
+//   return {
+//     amount,
+//     from,
+//     to,
+//     rate: toRate / fromRate,
+//     converted_amount: Number(((amount * toRate) / fromRate).toFixed(2)),
+//     currency: to,
+//   };
+// }
+
+// const FUNCTION_IMPLEMENTATIONS: Record<
+//   string,
+//   (args: ToolArgs) => Record<string, unknown>
+// > = {
+//   get_flight_schedule: getFlightSchedule,
+//   get_hotel_schedule: getHotelSchedule,
+//   convert_currency: convertCurrency,
+// };
+
+// const functionDeclarations = [
+//   {
+//     name: 'get_flight_schedule',
+//     description:
+//       'Return a flight schedule and pricing between two cities in USD.',
+//     parametersJsonSchema: {
+//       type: 'object',
+//       properties: {
+//         origin: { type: 'string', description: 'Origin city or airport code.' },
+//         destination: {
+//           type: 'string',
+//           description: 'Destination city or airport code.',
+//         },
+//       },
+//       required: ['origin', 'destination'],
+//       additionalProperties: false,
+//     },
+//   },
+//   {
+//     name: 'get_hotel_schedule',
+//     description:
+//       'Return hotel pricing for a city in USD for a given number of nights.',
+//     parametersJsonSchema: {
+//       type: 'object',
+//       properties: {
+//         city: {
+//           type: 'string',
+//           description: 'City where the hotel is located.',
+//         },
+//         nights: { type: 'number', description: 'Number of nights to stay.' },
+//       },
+//       required: ['city', 'nights'],
+//       additionalProperties: false,
+//     },
+//   },
+//   {
+//     name: 'convert_currency',
+//     description: 'Convert an amount from one currency to another.',
+//     parametersJsonSchema: {
+//       type: 'object',
+//       properties: {
+//         amount: { type: 'number', description: 'The amount to convert.' },
+//         from: {
+//           type: 'string',
+//           description: 'Source currency code, e.g. USD or KES.',
+//         },
+//         to: {
+//           type: 'string',
+//           description: 'Target currency code, e.g. USD or KES.',
+//         },
+//       },
+//       required: ['amount', 'from', 'to'],
+//       additionalProperties: false,
+//     },
+//   },
+// ];
+
+// async function runConversation() {
+//   const contents: Array<{ role: 'user' | 'model'; parts: any[] }> = [
+//     {
+//       role: 'user',
+//       parts: [createPartFromText(USER_PROMPT)],
+//     },
+//   ];
+
+//   while (true) {
+//     const response = await ai.models.generateContent({
+//       model: MODEL,
+//       contents,
+//       config: {
+//         maxOutputTokens: MAX_OUTPUT_TOKENS,
+//         tools: [{ functionDeclarations }],
+//         toolConfig: {
+//           functionCallingConfig: {
+//             mode: FunctionCallingConfigMode.AUTO,
+//           },
+//         },
+//       },
+//     });
+
+//     if (response.functionCalls) {
+//       for (const functionCall of response.functionCalls) {
+//         console.log(`Calling tool: ${functionCall.name}`, functionCall.args);
+//       }
+//     }
+
+//     if (!response.functionCalls || response.functionCalls.length === 0) {
+//       console.log(response.text ?? 'No final answer generated.');
+//       break;
+//     }
+
+//     contents.push({
+//       role: 'model',
+//       parts: response.functionCalls.map((functionCall) =>
+//         createPartFromFunctionCall(
+//           functionCall.name ?? 'unknown_function',
+//           (functionCall.args ?? {}) as Record<string, unknown>,
+//         ),
+//       ),
+//     });
+
+//     const functionResponseParts = response.functionCalls.map((functionCall) => {
+//       const functionName = functionCall.name ?? '';
+
+//       const implementation = FUNCTION_IMPLEMENTATIONS[functionName];
+
+//       if (!implementation) {
+//         throw new Error(`No implementation found for ${functionName}`);
+//       }
+
+//       const result = implementation((functionCall.args ?? {}) as ToolArgs);
+
+//       return createPartFromFunctionResponse(
+//         functionCall.id ?? `${functionName}-call`,
+//         functionName,
+//         result,
+//       );
+//     });
+
+//     contents.push({
+//       role: 'user',
+//       parts: functionResponseParts,
+//     });
+//   }
+// }
+
+// void runConversation();
+
 import 'dotenv/config';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-import { Document } from '@langchain/core/documents';
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
-import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
-import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
-import { HuggingFaceInferenceEmbeddings } from '@langchain/community/embeddings/hf';
-import { Chroma } from '@langchain/community/vectorstores/chroma';
-import { BM25Retriever } from '@langchain/community/retrievers/bm25';
-import { EnsembleRetriever } from 'langchain/retrievers/ensemble';
-import type { BaseRetriever } from '@langchain/core/retrievers';
+import {
+  FunctionCallingConfigMode,
+  GoogleGenAI,
+  createPartFromFunctionCall,
+  createPartFromFunctionResponse,
+  createPartFromText,
+} from '@google/genai';
 
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-import { ChatOpenAI } from '@langchain/openai';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { MemorySaver } from '@langchain/langgraph';
-import { HumanMessage, type BaseMessage } from '@langchain/core/messages';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.join(__dirname, 'data');
-
-const EMBEDDING_MODEL =
-  process.env.HF_EMBEDDING_MODEL || 'sentence-transformers/all-MiniLM-L6-v2';
-const CHUNK_SIZE = Number(process.env.RAG_CHUNK_SIZE || 500);
-const CHUNK_OVERLAP = Number(process.env.RAG_CHUNK_OVERLAP || 50);
-const DEFAULT_K = Number(process.env.RAG_TOP_K || 4);
-
-type LoaderFactory = (filePath: string) => { load(): Promise<Document[]> };
-
-const LOADER_MAP: Record<string, LoaderFactory> = {
-  '.txt': (p) => new TextLoader(p),
-  '.md': (p) => new TextLoader(p),
-  '.pdf': (p) => new PDFLoader(p),
-  '.csv': (p) => new CSVLoader(p),
-  '.docx': (p) => new DocxLoader(p),
-};
-
-class RAGManager {
-  private embeddings: HuggingFaceInferenceEmbeddings;
-  private textSplitter: RecursiveCharacterTextSplitter;
-  private vectorStore: Chroma;
-  private documents: Document[] = [];
-  private bm25Retriever: BM25Retriever | null = null;
-  private initPromise: Promise<void>;
-
-  constructor() {
-    this.embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: process.env.HF_API_KEY,
-      model: EMBEDDING_MODEL,
-    });
-
-    this.textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: CHUNK_SIZE,
-      chunkOverlap: CHUNK_OVERLAP,
-    });
-
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-
-    this.vectorStore = new Chroma(this.embeddings, {
-      collectionName: 'rag-collection',
-      url: process.env.CHROMA_URL || 'http://localhost:8000',
-    });
-
-    this.initPromise = this.loadDataDir().catch((err: any) => {
-      console.error('[RAG] Failed to initialize vector store:', err.message);
-    });
-  }
-
-  private async ensureReady(): Promise<void> {
-    await this.initPromise;
-  }
-
-  private async loadFile(filePath: string): Promise<Document[]> {
-    const ext = path.extname(filePath).toLowerCase();
-    const loaderFactory = LOADER_MAP[ext];
-    if (!loaderFactory) {
-      console.warn(`⚠ Skipping unsupported file type: ${filePath}`);
-      return [];
-    }
-    try {
-      const loader = loaderFactory(filePath);
-      const docs = await loader.load();
-      docs.forEach((d) => {
-        d.metadata.source = path.basename(filePath);
-        d.metadata.type = 'document';
-      });
-      const chunks = await this.textSplitter.splitDocuments(docs);
-      console.log(
-        `✓ Loaded ${path.basename(filePath)}: ${chunks.length} chunks`,
-      );
-      return chunks;
-    } catch (err: any) {
-      console.error(`✗ Error loading ${filePath}: ${err.message}`);
-      return [];
-    }
-  }
-
-  private async loadDataDir(): Promise<void> {
-    const entries = fs.existsSync(DATA_DIR) ? fs.readdirSync(DATA_DIR) : [];
-    let allDocs: Document[] = [];
-    for (const entry of entries) {
-      if (entry === '.gitkeep') continue;
-      const fullPath = path.join(DATA_DIR, entry);
-      if (fs.statSync(fullPath).isFile()) {
-        const docs = await this.loadFile(fullPath);
-        allDocs = allDocs.concat(docs);
-      }
-    }
-    if (allDocs.length > 0) {
-      await this.addDocuments(allDocs);
-    }
-  }
-
-  async addDocuments(docs: Document[]): Promise<void> {
-    if (docs.length === 0) return;
-    try {
-      this.documents.push(...docs);
-      await this.vectorStore.addDocuments(docs);
-      this.rebuildBM25();
-    } catch (err: any) {
-      console.error('[RAG] addDocuments failed:', err.message);
-
-      this.rebuildBM25();
-    }
-  }
-
-  private rebuildBM25(): void {
-    if (this.documents.length > 0) {
-      this.bm25Retriever = BM25Retriever.fromDocuments(this.documents, {
-        k: DEFAULT_K,
-      });
-    }
-  }
-
-  private getHybridRetriever(
-    k: number = DEFAULT_K,
-    weights: [number, number] = [0.5, 0.5],
-  ): BaseRetriever {
-    const vectorRetriever = this.vectorStore.asRetriever(k);
-    if (this.bm25Retriever) {
-      this.bm25Retriever.k = k;
-      return new EnsembleRetriever({
-        retrievers: [this.bm25Retriever, vectorRetriever],
-        weights,
-      });
-    }
-    return vectorRetriever;
-  }
-
-  async query(queryText: string, k: number = DEFAULT_K): Promise<string> {
-    try {
-      await this.ensureReady();
-      const retriever = this.getHybridRetriever(k);
-      const results = await retriever.invoke(queryText);
-      if (!results || results.length === 0) {
-        return 'No relevant internal information found.';
-      }
-      return results
-        .map(
-          (d: Document) =>
-            `[Source: ${d.metadata.source || d.metadata.type || 'unknown'}]\n${d.pageContent}`,
-        )
-        .join('\n\n');
-    } catch (err: any) {
-      console.error('[RAG] query failed:', err.message);
-
-      return 'Internal knowledge base is currently unavailable. Answer using general knowledge instead, and mention that internal documents could not be checked.';
-    }
-  }
-
-  async saveConversationTurn(
-    role: string,
-    content: string,
-    sessionId: string = 'default',
-  ): Promise<void> {
-    await this.ensureReady();
-    if (!content) return;
-    const doc = new Document({
-      pageContent: `${role}: ${content}`,
-      metadata: { type: 'conversation_history', role, session_id: sessionId },
-    });
-    await this.addDocuments([doc]);
-  }
+if (!GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is missing from the .env file.');
 }
 
-const ragManager = new RAGManager();
+const ai = new GoogleGenAI({
+  apiKey: GEMINI_API_KEY,
+});
 
-const getFlightSchedule = tool(
-  async ({ origin, destination }: { origin: string; destination: string }) => {
-    const flightTimeHoursOneWay = 5.5;
-    const oneWayPriceUsd = 460;
+const MAX_OUTPUT_TOKENS = Number(process.env.MAX_OUTPUT_TOKENS ?? 2048);
+const MAX_TOOL_ITERATIONS = Number(process.env.MAX_TOOL_ITERATIONS ?? 8);
 
-    return JSON.stringify({
-      origin,
-      destination,
-      flight_time_hours_one_way: flightTimeHoursOneWay,
-      round_trip_flight_time_hours: flightTimeHoursOneWay * 2,
-      one_way_price_usd: oneWayPriceUsd,
-      round_trip_price_usd: oneWayPriceUsd * 2,
-      currency: 'USD',
-    });
-  },
+const MODEL = process.env.LLM_MODEL_NAME ?? 'gemini-2.5-flash';
+
+const DEFAULT_PROMPT = `I'm taking a flight from Lagos to Nairobi for a conference.
+I would like to know the total flight time back and forth, and the total cost of logistics for this conference if I'm staying for three days.`;
+
+const USER_PROMPT = process.argv.slice(2).join(' ').trim() || DEFAULT_PROMPT;
+
+type ToolArgs = Record<string, unknown>;
+
+function getFlightSchedule(args: ToolArgs) {
+  const origin = String(args.origin ?? 'Lagos');
+  const destination = String(args.destination ?? 'Nairobi');
+
+  return {
+    origin,
+    destination,
+    flight_time_hours_one_way: 5.5,
+    round_trip_flight_time_hours: 11,
+    one_way_price_usd: 460,
+    round_trip_price_usd: 920,
+    currency: 'USD',
+  };
+}
+
+function getHotelSchedule(args: ToolArgs) {
+  const city = String(args.city ?? 'Nairobi');
+  const nights = Number(args.nights ?? 3);
+  const nightlyRateUsd = 140;
+
+  return {
+    city,
+    hotel_name: 'Radisson Blu Nairobi',
+    nightly_rate_usd: nightlyRateUsd,
+    nights,
+    total_price_usd: nightlyRateUsd * nights,
+    currency: 'USD',
+  };
+}
+
+function convertCurrency(args: ToolArgs) {
+  const amount = Number(args.amount ?? 0);
+  const from = String(args.from ?? 'USD');
+  const to = String(args.to ?? 'KES');
+
+  const fxRates: Record<string, number> = {
+    USD: 1,
+    KES: 129.5,
+    NGN: 1510,
+    EUR: 0.92,
+  };
+
+  const fromRate = fxRates[from] ?? 1;
+  const toRate = fxRates[to] ?? 1;
+
+  return {
+    amount,
+    from,
+    to,
+    rate: toRate / fromRate,
+    converted_amount: Number(((amount * toRate) / fromRate).toFixed(2)),
+    currency: to,
+  };
+}
+
+const FUNCTION_IMPLEMENTATIONS: Record<
+  string,
+  (args: ToolArgs) => Record<string, unknown>
+> = {
+  get_flight_schedule: getFlightSchedule,
+  get_hotel_schedule: getHotelSchedule,
+  convert_currency: convertCurrency,
+};
+
+const functionDeclarations = [
   {
     name: 'get_flight_schedule',
     description:
       'Return a flight schedule and pricing between two cities in USD.',
-    schema: z.object({
-      origin: z.string().describe('Origin city or airport code.'),
-      destination: z.string().describe('Destination city or airport code.'),
-    }),
-  },
-);
-
-const getHotelSchedule = tool(
-  async ({ city, nights }: { city: string; nights: number }) => {
-    const nightlyRateUsd = 140;
-
-    return JSON.stringify({
-      city,
-      hotel_name: 'Radisson Blu Nairobi',
-      nightly_rate_usd: nightlyRateUsd,
-      nights,
-      total_price_usd: nightlyRateUsd * nights,
-      currency: 'USD',
-    });
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        origin: { type: 'string', description: 'Origin city or airport code.' },
+        destination: {
+          type: 'string',
+          description: 'Destination city or airport code.',
+        },
+      },
+      required: ['origin', 'destination'],
+      additionalProperties: false,
+    },
   },
   {
     name: 'get_hotel_schedule',
     description:
       'Return hotel pricing for a city in USD for a given number of nights.',
-    schema: z.object({
-      city: z.string().describe('City where the hotel is located.'),
-      nights: z.number().describe('Number of nights to stay.'),
-    }),
-  },
-);
-
-const FX_RATES: Record<string, number> = {
-  USD: 1,
-  KES: 129.5,
-  NGN: 1510,
-  EUR: 0.92,
-};
-
-const convertCurrency = tool(
-  async ({
-    amount,
-    from,
-    to,
-  }: {
-    amount: number;
-    from: string;
-    to: string;
-  }) => {
-    const fromRate = FX_RATES[from] ?? 1;
-    const toRate = FX_RATES[to] ?? 1;
-    const convertedAmount = (amount * toRate) / fromRate;
-
-    return JSON.stringify({
-      amount,
-      from,
-      to,
-      rate: toRate / fromRate,
-      converted_amount: Number(convertedAmount.toFixed(2)),
-      currency: to,
-    });
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        city: {
+          type: 'string',
+          description: 'City where the hotel is located.',
+        },
+        nights: { type: 'number', description: 'Number of nights to stay.' },
+      },
+      required: ['city', 'nights'],
+      additionalProperties: false,
+    },
   },
   {
     name: 'convert_currency',
     description: 'Convert an amount from one currency to another.',
-    schema: z.object({
-      amount: z.number().describe('The amount to convert.'),
-      from: z.string().describe('Source currency code, e.g. USD or KES.'),
-      to: z.string().describe('Target currency code, e.g. USD or KES.'),
-    }),
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        amount: { type: 'number', description: 'The amount to convert.' },
+        from: {
+          type: 'string',
+          description: 'Source currency code, e.g. USD or KES.',
+        },
+        to: {
+          type: 'string',
+          description: 'Target currency code, e.g. USD or KES.',
+        },
+      },
+      required: ['amount', 'from', 'to'],
+      additionalProperties: false,
+    },
   },
-);
-
-const queryInternalKnowledge = tool(
-  async ({ query }: { query: string }) => {
-    return ragManager.query(query);
-  },
-  {
-    name: 'query_internal_knowledge',
-    description:
-      'Query the internal knowledge base for information from documents placed ' +
-      'in the data/ folder, as well as prior conversation history, using hybrid ' +
-      '(BM25 + vector) retrieval. Use this for anything not covered by the other tools.',
-    schema: z.object({
-      query: z
-        .string()
-        .describe('A description of the internal information needed.'),
-    }),
-  },
-);
-
-const ALL_TOOLS = [
-  getFlightSchedule,
-  getHotelSchedule,
-  convertCurrency,
-  queryInternalKnowledge,
 ];
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL =
-  process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-nano-30b-a3b:free';
-const OPENROUTER_BASE_URL =
-  process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
-const DEFAULT_THREAD_ID = process.env.AGENT_SESSION_ID || 'default-session';
-
-const checkpointer = new MemorySaver();
-
-function buildLLM(): ChatOpenAI {
-  return new ChatOpenAI({
-    model: OPENROUTER_MODEL,
-    apiKey: OPENROUTER_API_KEY,
-    temperature: 0,
-    configuration: {
-      baseURL: OPENROUTER_BASE_URL,
+async function runConversation() {
+  const contents: Array<{ role: 'user' | 'model'; parts: any[] }> = [
+    {
+      role: 'user',
+      parts: [createPartFromText(USER_PROMPT)],
     },
-  });
-}
+  ];
 
-function buildAgent() {
-  const llm = buildLLM();
-  return createReactAgent({
-    llm,
-    tools: ALL_TOOLS,
-    checkpointSaver: checkpointer,
-  });
-}
+  let iterations = 0;
 
-function formatMessage(m: BaseMessage): string {
-  const role =
-    typeof m.getType === 'function' ? m.getType() : m.constructor.name;
-  const content =
-    typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-  return content ? `[${role}] ${content}` : `[${role}] <tool/empty content>`;
-}
+  while (true) {
+    if (iterations >= MAX_TOOL_ITERATIONS) {
+      console.log(
+        `Stopped after ${MAX_TOOL_ITERATIONS} tool-call rounds without a final answer. ` +
+          'Increase MAX_TOOL_ITERATIONS in .env if this task genuinely needs more steps.',
+      );
+      break;
+    }
+    iterations += 1;
 
-async function runAgent(
-  prompt: string,
-  threadId: string = DEFAULT_THREAD_ID,
-): Promise<string> {
-  const agent = buildAgent();
-  const config = { configurable: { thread_id: threadId } };
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: MODEL,
+        contents,
+        config: {
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          tools: [{ functionDeclarations }],
+          toolConfig: {
+            functionCallingConfig: {
+              mode: FunctionCallingConfigMode.AUTO,
+            },
+          },
+        },
+      });
+    } catch (err: any) {
+      console.error(`Gemini API error: ${err.message ?? err}`);
+      break;
+    }
 
-  await ragManager.saveConversationTurn('user', prompt, threadId);
+    if (response.functionCalls) {
+      for (const functionCall of response.functionCalls) {
+        console.log(`Calling tool: ${functionCall.name}`, functionCall.args);
+      }
+    }
 
-  const result = await agent.invoke(
-    { messages: [new HumanMessage(prompt)] },
-    { ...config, recursionLimit: 10 },
-  );
-  const messages: BaseMessage[] = result.messages;
+    if (!response.functionCalls || response.functionCalls.length === 0) {
+      console.log(response.text ?? 'No final answer generated.');
+      break;
+    }
 
-  console.log('=== Full Conversation History ===');
-  for (const m of messages) {
-    console.log(formatMessage(m));
+    contents.push({
+      role: 'model',
+      parts: response.functionCalls.map((functionCall) =>
+        createPartFromFunctionCall(
+          functionCall.name ?? 'unknown_function',
+          (functionCall.args ?? {}) as Record<string, unknown>,
+        ),
+      ),
+    });
+
+    const functionResponseParts = response.functionCalls.map((functionCall) => {
+      const functionName = functionCall.name ?? '';
+
+      const implementation = FUNCTION_IMPLEMENTATIONS[functionName];
+
+      if (!implementation) {
+        throw new Error(`No implementation found for ${functionName}`);
+      }
+
+      const result = implementation((functionCall.args ?? {}) as ToolArgs);
+
+      return createPartFromFunctionResponse(
+        functionCall.id ?? `${functionName}-call`,
+        functionName,
+        result,
+      );
+    });
+
+    contents.push({
+      role: 'user',
+      parts: functionResponseParts,
+    });
   }
-  console.log();
-
-  const finalMessage = messages[messages.length - 1];
-  const finalContent =
-    typeof finalMessage.content === 'string'
-      ? finalMessage.content
-      : JSON.stringify(finalMessage.content);
-
-  await ragManager.saveConversationTurn('assistant', finalContent, threadId);
-
-  console.log('=== Final Response ===');
-  console.log(finalContent);
-
-  return finalContent;
 }
 
-async function main() {
-  const prompt = process.argv[2];
-  if (!prompt) {
-    console.log('Usage: npx tsx main.ts "<your prompt>"');
-    process.exit(1);
-  }
-  await runAgent(prompt);
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+void runConversation();
