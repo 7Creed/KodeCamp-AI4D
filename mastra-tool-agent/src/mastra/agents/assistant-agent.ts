@@ -9,7 +9,9 @@ import { ragTool } from '../tools/rag-tool.js';
 import { agentMemory } from '../memory.js';
 
 const MODEL_NAME =
-  process.env.MODEL_NAME ?? 'openrouter/nvidia/nemotron-3-nano-30b-a3b:free';
+  process.env.MODEL_NAME ?? 'nvidia/nemotron-3-super-120b-a12b:free';
+
+const MODEL = `openrouter/${MODEL_NAME}`;
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY is missing from the .env file.');
@@ -43,7 +45,7 @@ When converting monetary values, use the currency tool.
 Keep responses clear, useful, and concise.
 `,
 
-  model: MODEL_NAME,
+  model: MODEL,
 
   tools: {
     flightTool,
