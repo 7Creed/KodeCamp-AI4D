@@ -1,0 +1,164 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #f5f7fb;
+  color: #182033;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.shell {
+  width: min(1100px, calc(100% - 32px));
+  margin: 60px auto;
+}
+
+header {
+  margin-bottom: 32px;
+}
+h1 {
+  font-size: 44px;
+  margin: 4px 0;
+}
+h2 {
+  margin-top: 0;
+}
+.subtitle {
+  color: #667085;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.panel {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+form,
+label {
+  display: grid;
+  gap: 8px;
+}
+
+form {
+  gap: 18px;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+}
+
+button {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+form > button {
+  background: #182033;
+  color: white;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.finding {
+  border-top: 1px solid #eaecf0;
+  padding: 20px 0;
+}
+
+.finding-top {
+  display: flex;
+  gap: 10px;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.severity {
+  color: #b42318;
+}
+
+.history-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  text-align: left;
+  margin: 8px 0;
+  background: #fafafa;
+}
+
+code {
+  color: #475467;
+}
+
+.activity {
+  margin: 24px 0;
+}
+
+.activity-item {
+  display: grid;
+  grid-template-columns: 140px 100px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eaecf0;
+}
+
+@media (max-width: 700px) {
+  .activity-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  h1 {
+    font-size: 34px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .history-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+#recommendation {
+  display: inline-block;
+  padding: 8px 12px;
+  background: #f2f4f7;
+  border-radius: 8px;
+  font-size: 18px;
+}
+
+.finding h3 {
+  margin-bottom: 8px;
+}
+
+.finding small {
+  color: #667085;
+}
+
+#status {
+  border-left: 4px solid #182033;
+}

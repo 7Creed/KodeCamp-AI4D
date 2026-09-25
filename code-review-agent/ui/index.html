@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code Review Agent</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">AI FOR DEVELOPERS · CAPSTONE</p>
+        <h1>Code Review Agent</h1>
+        <p class="subtitle">
+          Multi-agent review powered by specialist AI reviewers.
+        </p>
+      </header>
+
+      <section class="panel">
+        <h2>Start a review</h2>
+
+        <form id="review-form">
+          <label>
+            Repository path
+            <input
+              id="repositoryPath"
+              value="./evaluation/scenario-01-correctness"
+              required
+            />
+          </label>
+
+          <label>
+            Review target
+            <select id="type">
+              <option value="repository">Working changes</option>
+              <option value="commit">Commit</option>
+              <option value="pull-request">GitHub PR</option>
+              <option value="diff">Raw diff</option>
+            </select>
+          </label>
+
+          <label id="reference-field" hidden>
+            Commit SHA or PR URL
+            <input id="reference" />
+          </label>
+
+          <label id="diff-field" hidden>
+            Git diff
+            <textarea id="diff" rows="10"></textarea>
+          </label>
+
+          <button type="submit">Start review</button>
+        </form>
+      </section>
+
+      <section id="status" class="panel" hidden></section>
+
+      <section id="report" class="panel" hidden>
+        <div class="report-heading">
+          <div>
+            <p class="eyebrow">REVIEW RESULT</p>
+            <h2 id="recommendation"></h2>
+          </div>
+        </div>
+
+        <div id="specialists"></div>
+
+        <div class="activity">
+          <h3>Review activity</h3>
+          <div id="activity"></div>
+        </div>
+
+        <div class="filters">
+          <select id="severity-filter">
+            <option value="">All severities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="suggestion">Suggestion</option>
+          </select>
+
+          <select id="category-filter">
+            <option value="">All categories</option>
+          </select>
+
+          <select id="file-filter">
+            <option value="">All files</option>
+          </select>
+        </div>
+
+        <div id="findings"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Review history</h2>
+        <div id="history"></div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
